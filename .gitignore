@@ -1,0 +1,41 @@
+﻿# Java / Maven
+**/target/
+**/.mvn/
+**/mvnw
+**/mvnw.cmd
+**/.classpath
+**/.project
+**/.settings/
+**/.idea/
+*.iml
+*.class
+*.jar
+*.war
+*.ear
+*.log
+
+# Angular
+**/node_modules/
+**/dist/
+**/.angular/
+**/.cache/
+**/coverage/
+**/.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+*.log
+
+# Environment
+.env
+.env.local
