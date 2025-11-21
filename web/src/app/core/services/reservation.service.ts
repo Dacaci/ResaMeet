@@ -23,9 +23,6 @@ export class ReservationService {
     return this.http.get<Reservation>(`${this.apiUrl}/reservations/${id}`);
   }
 
-  getReservationsByResource(resourceId: number): Observable<Reservation[]> {
-    return this.http.get<Reservation[]>(`${this.apiUrl}/reservations/resource/${resourceId}`);
-  }
 
   cancelReservation(id: number): Observable<Reservation> {
     return this.http.post<Reservation>(`${this.apiUrl}/reservations/${id}/cancel`, {});
