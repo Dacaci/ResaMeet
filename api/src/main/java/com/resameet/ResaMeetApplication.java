@@ -1,4 +1,4 @@
-﻿package com.resameet;
+package com.resameet;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
