@@ -23,6 +23,9 @@ public class AuthController {
             .orElseThrow(() -> new RuntimeException("Identifiants invalides"));
 
         String token = jwtUtil.generateToken(user.getUsername());
-        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), user.getRoles()));
+        List<String> roles = user.getRoles().stream()
+            .map(role -> role.getName().name())
+            .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(new LoginResponse(token, user.getUsername(), roles));
     }
 }
