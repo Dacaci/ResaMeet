@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: resameet-postgres
+    environment:
+      POSTGRES_USER: resameet
+      POSTGRES_PASSWORD: resameet123
+      POSTGRES_DB: resameet_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resameet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo:
+    image: mongo:7
+    container_name: resameet-mongo
+    environment:
+      MONGO_INITDB_DATABASE: resameet_audit
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: resameet-api
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/resameet_db
+      SPRING_DATASOURCE_USERNAME: resameet
+      SPRING_DATASOURCE_PASSWORD: resameet123
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017/resameet_audit
+      JWT_SECRET: your-secret-key-change-in-production-min-256-bits
+      JWT_EXPIRATION: 86400000
+      CANCELLATION_WINDOW_HOURS: 2
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    container_name: resameet-web
+    ports:
+      - "80:80"
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8080
+
+  sonarqube:
+    image: sonarqube:community
+    container_name: resameet-sonar
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: true
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
+    profiles:
+      - quality
+
+volumes:
+  postgres_data:
+  mongo_data:
+  sonar_data:
+  sonar_extensions:
+
+
+
+
+

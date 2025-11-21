@@ -1,0 +1,291 @@
+@startuml ResaMeet - Diagramme de Classes
+
+!define ENTITY_COLOR #E1F5FF
+!define SERVICE_COLOR #FFF4E1
+!define CONTROLLER_COLOR #E8F5E9
+!define DTO_COLOR #F3E5F5
+!define REPOSITORY_COLOR #FFF9C4
+
+package "Domain - Modèles" #ENTITY_COLOR {
+  class User {
+    - Long id
+    - String username
+    - String password
+    - String email
+    - Set<Role> roles
+  }
+
+  class Role {
+    - Long id
+    - RoleName name
+    --
+    + enum RoleName {
+    +   USER
+    +   ADMIN
+    + }
+  }
+
+  class Ressource {
+    - Long id
+    - String nom
+    - String localisation
+    - Integer capacite
+    - String description
+  }
+
+  class Reservation {
+    - Long id
+    - User user
+    - Ressource ressource
+    - LocalDateTime dateDebut
+    - LocalDateTime dateFin
+    - ReservationStatus status
+    - LocalDateTime dateAnnulation
+  }
+
+  class ReservationStatus {
+    <<enumeration>>
+    EN_ATTENTE
+    CONFIRMEE
+    REFUSEE
+    ANNULEE
+  }
+
+  class AuditEvent {
+    - String id
+    - String type
+    - Long userId
+    - Long resourceId
+    - Long reservationId
+    - LocalDateTime timestamp
+    - Map<String, Object> payload
+  }
+
+  User "0..*" -- "0..*" Role : a
+  Reservation "0..*" --> "1" User : appartient à
+  Reservation "0..*" --> "1" Ressource : utilise
+  Reservation --> ReservationStatus : a
+}
+
+package "Domain - Repositories" #REPOSITORY_COLOR {
+  interface UserRepository {
+    + Optional<User> findByUsername(String username)
+  }
+
+  interface ReservationRepository {
+    + List<Reservation> findByUserId(Long userId)
+    + List<Reservation> findOverlappingReservations(Long ressourceId, LocalDateTime dateDebut, LocalDateTime dateFin)
+  }
+
+  interface RessourceRepository {
+    + List<Ressource> searchByNomOrLocalisation(String search)
+  }
+
+  interface AuditEventRepository {
+  }
+}
+
+package "Application - Services" #SERVICE_COLOR {
+  class AuthService {
+    - UserRepository userRepository
+    - PasswordEncoder passwordEncoder
+    + Optional<User> authenticate(String username, String password)
+  }
+
+  class ReservationService {
+    - ReservationRepository reservationRepository
+    - RessourceRepository ressourceRepository
+    - AuditService auditService
+    - int cancellationWindowHours
+    + Reservation createReservation(...)
+    + Reservation cancelReservation(Long id, Long userId)
+    + Reservation confirmReservation(Long id)
+    + Reservation refuseReservation(Long id)
+    + List<Reservation> getReservationsByResource(Long id)
+    + List<Reservation> getReservationsByUser(Long id)
+    + Reservation getReservationById(Long id)
+  }
+
+  class RessourceService {
+    - RessourceRepository ressourceRepository
+    + List<Ressource> getAllRessources()
+    + List<Ressource> searchRessources(String search)
+    + Ressource getRessourceById(Long id)
+    + Ressource createRessource(Ressource ressource)
+    + Ressource updateRessource(Long id, Ressource ressource)
+    + void deleteRessource(Long id)
+  }
+
+  class AuditService {
+    - AuditEventRepository auditEventRepository
+    + void logEvent(String type, ...)
+    + void logReservationCreated(...)
+    + void logReservationConfirmed(...)
+    + void logReservationCanceled(...)
+    + void logReservationRefused(...)
+  }
+
+  class BusinessException {
+    - String code
+    - String message
+  }
+}
+
+package "Presentation - Controllers" #CONTROLLER_COLOR {
+  class AuthController {
+    - AuthService authService
+    - JwtUtil jwtUtil
+    + ResponseEntity<LoginResponse> login(LoginRequest)
+  }
+
+  class ReservationController {
+    - ReservationService reservationService
+    - ReservationMapper reservationMapper
+    - UserRepository userRepository
+    + ResponseEntity<ReservationDto> createReservation(...)
+    + ResponseEntity<List<ReservationDto>> getMyReservations(...)
+    + ResponseEntity<ReservationDto> getReservationById(...)
+    + ResponseEntity<ReservationDto> cancelReservation(...)
+    + ResponseEntity<ReservationDto> confirmReservation(...)
+    + ResponseEntity<ReservationDto> refuseReservation(...)
+  }
+
+  class RessourceController {
+    - RessourceService ressourceService
+    - RessourceMapper ressourceMapper
+    + ResponseEntity<List<RessourceDto>> getAllRessources(...)
+    + ResponseEntity<RessourceDto> getRessourceById(...)
+    + ResponseEntity<RessourceDto> createRessource(...)
+    + ResponseEntity<RessourceDto> updateRessource(...)
+    + ResponseEntity<Void> deleteRessource(...)
+  }
+}
+
+package "Presentation - DTOs" #DTO_COLOR {
+  class LoginRequest {
+    - String username
+    - String password
+  }
+
+  class LoginResponse {
+    - String token
+    - String username
+    - Set<Role> roles
+  }
+
+  class ReservationDto {
+    - Long id
+    - Long resourceId
+    - Long userId
+    - LocalDateTime startDateTime
+    - LocalDateTime endDateTime
+    - Integer nbParticipants
+    - ReservationStatus status
+  }
+
+  class RessourceDto {
+    - Long id
+    - String nom
+    - Integer capacite
+    - String localisation
+    - String description
+  }
+
+  class ErrorResponse {
+    - String code
+    - String message
+    - LocalDateTime timestamp
+  }
+}
+
+package "Presentation - Mappers" {
+  class ReservationMapper {
+    + ReservationDto toDto(Reservation)
+    + Reservation toEntity(ReservationDto)
+  }
+
+  class RessourceMapper {
+    + RessourceDto toDto(Ressource)
+    + Ressource toEntity(RessourceDto)
+  }
+}
+
+package "Infrastructure - Security" {
+  class JwtUtil {
+    + String generateToken(String username)
+    + String extractUsername(String token)
+    + Boolean validateToken(String token)
+  }
+
+  class JwtAuthenticationFilter {
+    - JwtUtil jwtUtil
+    - CustomUserDetailsService userDetailsService
+  }
+
+  class SecurityConfig {
+  }
+
+  class CustomUserDetailsService {
+    - UserRepository userRepository
+  }
+}
+
+package "Infrastructure - Config" {
+  class DataInitializer {
+  }
+}
+
+package "Exception Handling" {
+  class GlobalExceptionHandler {
+    + ResponseEntity<ErrorResponse> handleBusinessException(...)
+    + ResponseEntity<ErrorResponse> handleValidationException(...)
+  }
+}
+
+' Relations entre les couches
+AuthController --> AuthService : utilise
+AuthController --> JwtUtil : utilise
+AuthController --> LoginRequest : reçoit
+AuthController --> LoginResponse : retourne
+
+ReservationController --> ReservationService : utilise
+ReservationController --> ReservationMapper : utilise
+ReservationController --> ReservationDto : utilise
+ReservationController --> UserRepository : utilise
+
+RessourceController --> RessourceService : utilise
+RessourceController --> RessourceMapper : utilise
+RessourceController --> RessourceDto : utilise
+
+ReservationService --> ReservationRepository : utilise
+ReservationService --> RessourceRepository : utilise
+ReservationService --> AuditService : utilise
+ReservationService --> BusinessException : lance
+
+RessourceService --> RessourceRepository : utilise
+RessourceService --> BusinessException : lance
+
+AuthService --> UserRepository : utilise
+
+AuditService --> AuditEventRepository : utilise
+
+ReservationMapper --> Reservation : mappe
+ReservationMapper --> ReservationDto : mappe
+
+RessourceMapper --> Ressource : mappe
+RessourceMapper --> RessourceDto : mappe
+
+ReservationRepository ..> Reservation : gère
+RessourceRepository ..> Ressource : gère
+UserRepository ..> User : gère
+AuditEventRepository ..> AuditEvent : gère
+
+GlobalExceptionHandler --> BusinessException : gère
+GlobalExceptionHandler --> ErrorResponse : retourne
+
+JwtAuthenticationFilter --> JwtUtil : utilise
+JwtAuthenticationFilter --> CustomUserDetailsService : utilise
+CustomUserDetailsService --> UserRepository : utilise
+
+@enduml
+
