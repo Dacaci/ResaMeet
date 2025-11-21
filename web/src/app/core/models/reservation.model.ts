@@ -1,16 +1,18 @@
 export enum ReservationStatus {
-  PENDING = 'PENDING',
-  CONFIRMED = 'CONFIRMED',
-  CANCELED = 'CANCELED',
-  REFUSED = 'REFUSED'
+  EN_ATTENTE = 'EN_ATTENTE',
+  CONFIRMEE = 'CONFIRMEE',
+  REFUSEE = 'REFUSEE',
+  ANNULEE = 'ANNULEE'
 }
 
 export interface Reservation {
   id?: number;
   resourceId: number;
   userId?: number;
-  startDateTime: string;
-  endDateTime: string;
-  nbParticipants: number;
+  username?: string;
+  ressourceNom?: string;
+  dateDebut: string;
+  dateFin: string;
   status?: ReservationStatus;
+  dateAnnulation?: string;
 }
