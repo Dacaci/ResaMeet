@@ -9,12 +9,14 @@ public class ReservationMapper {
     public ReservationDto toDto(Reservation reservation) {
         ReservationDto dto = new ReservationDto();
         dto.setId(reservation.getId());
-        dto.setResourceId(reservation.getResourceId());
-        dto.setUserId(reservation.getUserId());
-        dto.setStartDateTime(reservation.getStartDateTime());
-        dto.setEndDateTime(reservation.getEndDateTime());
-        dto.setNbParticipants(reservation.getNbParticipants());
+        dto.setResourceId(reservation.getRessource().getId());
+        dto.setUserId(reservation.getUser().getId());
+        dto.setUsername(reservation.getUser().getUsername());
+        dto.setRessourceNom(reservation.getRessource().getNom());
+        dto.setDateDebut(reservation.getDateDebut());
+        dto.setDateFin(reservation.getDateFin());
         dto.setStatus(reservation.getStatus());
+        dto.setDateAnnulation(reservation.getDateAnnulation());
         return dto;
     }
 }

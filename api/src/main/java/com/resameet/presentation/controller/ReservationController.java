@@ -35,9 +35,8 @@ public class ReservationController {
         Reservation reservation = reservationService.createReservation(
             userId,
             dto.getResourceId(),
-            dto.getStartDateTime(),
-            dto.getEndDateTime(),
-            dto.getNbParticipants()
+            dto.getDateDebut(),
+            dto.getDateFin()
         );
         
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -82,13 +81,6 @@ public class ReservationController {
         return ResponseEntity.ok(reservationMapper.toDto(reservation));
     }
 
-    @GetMapping("/resource/{resourceId}")
-    public ResponseEntity<List<ReservationDto>> getReservationsByResource(@PathVariable Long resourceId) {
-        List<Reservation> reservations = reservationService.getReservationsByResource(resourceId);
-        return ResponseEntity.ok(reservations.stream()
-            .map(reservationMapper::toDto)
-            .collect(Collectors.toList()));
-    }
 
     private Long getUserIdFromAuthentication(Authentication authentication) {
         String username = ((UserDetails) authentication.getPrincipal()).getUsername();

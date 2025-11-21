@@ -16,18 +16,15 @@ public class ReservationDto {
     private Long resourceId;
 
     private Long userId;
+    private String username;
+    private String ressourceNom;
 
     @NotNull(message = "La date de début est requise")
-    @Future(message = "La date de début doit être dans le futur")
-    private LocalDateTime startDateTime;
+    private LocalDateTime dateDebut;
 
     @NotNull(message = "La date de fin est requise")
-    @Future(message = "La date de fin doit être dans le futur")
-    private LocalDateTime endDateTime;
-
-    @NotNull(message = "Le nombre de participants est requis")
-    @Min(value = 1, message = "Le nombre de participants doit être au moins 1")
-    private Integer nbParticipants;
+    private LocalDateTime dateFin;
 
     private ReservationStatus status;
+    private LocalDateTime dateAnnulation;
 }
